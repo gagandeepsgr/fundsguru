@@ -277,7 +277,7 @@ function resetModalForm() {
   if (successScreen) successScreen.style.display = 'none';
 }
 
-const WEB3FORMS_ACCESS_KEY = '33ffa608-c969-41cd-961f-b2034a68778d';
+const WEB3FORMS_ACCESS_KEY = '279f309f-ba3a-4dc6-991b-bae479babfe6';
 
 /* ==========================================================================
    WEBMAIL DISPATCH ENGINE
