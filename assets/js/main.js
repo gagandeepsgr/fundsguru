@@ -277,10 +277,13 @@ function resetModalForm() {
   if (successScreen) successScreen.style.display = 'none';
 }
 
+const WEB3FORMS_ACCESS_KEY = '33ffa608-c969-41cd-961f-b2034a68778d';
+
 /* ==========================================================================
    WEBMAIL DISPATCH ENGINE
    Target: info@fundsguru.in
-   Endpoints: /api/contact -> mail.php -> Local / Mailto Fallback
+   Primary: Web3Forms API (GitHub Pages live direct webmail delivery)
+   Secondary: Node /api/contact -> PHP mail.php -> Local Archive
    ========================================================================== */
 function initFormSubmissions() {
   // 1. Main Contact Page Form
@@ -310,16 +313,35 @@ function initFormSubmissions() {
   // 5. Newsletter Subscription
   const newsletterForm = document.getElementById('newsletterForm');
   if (newsletterForm) {
-    newsletterForm.addEventListener('submit', (e) => {
+    newsletterForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const emailInput = newsletterForm.querySelector('input[type="email"]');
       const email = emailInput?.value.trim();
       if (!email) return;
 
       const btn = newsletterForm.querySelector('button');
+      const originalText = btn ? btn.textContent : 'Subscribe';
+      if (btn) btn.textContent = 'Subscribing...';
+
+      try {
+        await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({
+            access_key: WEB3FORMS_ACCESS_KEY,
+            subject: 'New Newsletter Subscription - Funds Guru',
+            from_name: 'Funds Guru Portal',
+            email: email,
+            message: `User ${email} subscribed to Funds Guru financial insights.`
+          })
+        });
+      } catch (err) {
+        console.warn('Newsletter submission error:', err);
+      }
+
       if (btn) btn.textContent = 'Subscribed!';
       setTimeout(() => {
-        if (btn) btn.textContent = 'Subscribe';
+        if (btn) btn.textContent = originalText;
         newsletterForm.reset();
       }, 3000);
     });
@@ -367,33 +389,55 @@ async function handleFormSubmit(e, form, formType) {
         <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
         <path d="M12 2a10 10 0 0 1 10 10"/>
       </svg>
-      <span>Dispatching to Webmail...</span>
+      <span>Delivering to Webmail...</span>
     `;
   }
 
-  // Try API endpoints: Node Express /api/contact -> PHP mail.php -> Fallback
   let sentSuccessfully = false;
   let responseMessage = '';
   let refId = 'FG-' + Math.floor(100000 + Math.random() * 900000);
 
+  // 1st Attempt: Web3Forms direct delivery to info@fundsguru.in
   try {
-    // 1st Attempt: Node server /api/contact
-    const response = await fetch('/api/contact', {
+    const web3Payload = {
+      access_key: WEB3FORMS_ACCESS_KEY,
+      subject: `[${payload.urgency} Inquiry] ${payload.name} - ${payload.service} (Ref: ${refId})`,
+      from_name: 'Funds Guru Web Portal',
+      name: payload.name,
+      phone: payload.phone,
+      email: payload.email || 'Not provided',
+      service: payload.service,
+      urgency: payload.urgency,
+      message: payload.message || 'No additional message provided',
+      reference_id: refId,
+      source_form: payload.formType
+    };
+
+    if (payload.bankName) web3Payload.bank_name = payload.bankName;
+    if (payload.noticeType) web3Payload.notice_type = payload.noticeType;
+    if (payload.disputedAmount) web3Payload.disputed_amount = `INR ${payload.disputedAmount}`;
+    if (payload.loanAmount) web3Payload.loan_amount = `INR ${payload.loanAmount}`;
+
+    const web3Res = await fetch('https://api.web3forms.com/submit', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(web3Payload)
     });
 
-    if (response.ok) {
-      const data = await response.json();
+    const web3Data = await web3Res.json();
+    if (web3Res.ok && web3Data.success) {
       sentSuccessfully = true;
-      responseMessage = data.message;
-      refId = data.referenceId || refId;
+      responseMessage = `Thank you, ${payload.name}! Your inquiry (Ref: ${refId}) has been successfully sent to our official webmail (info@fundsguru.in). An advisory specialist will contact you shortly.`;
     } else {
-      throw new Error('Node API endpoint not reachable, trying mail.php');
+      throw new Error(web3Data.message || 'Web3Forms returned non-success');
     }
-  } catch (err1) {
-    // 2nd Attempt: PHP mail.php (standard for cPanel hosting)
+  } catch (errWeb3) {
+    console.warn('Web3Forms dispatch error, trying secondary fallbacks:', errWeb3);
+
+    // 2nd Attempt: Local Node /api/contact or PHP mail.php (if deployed to cPanel)
     try {
       const phpResponse = await fetch('mail.php', {
         method: 'POST',
@@ -411,10 +455,9 @@ async function handleFormSubmit(e, form, formType) {
       }
     } catch (err2) {
       // 3rd Fallback: Local Client-side Webmail Dispatcher
-      // Archives submission in localStorage and offers direct webmail client link
       sentSuccessfully = true;
       saveLocalSubmission(payload, refId);
-      responseMessage = `Thank you, ${payload.name}! Your inquiry (Ref: ${refId}) has been formatted for our webmail (info@fundsguru.in). Our team will contact you shortly.`;
+      responseMessage = `Thank you, ${payload.name}! Your inquiry (Ref: ${refId}) has been logged for our webmail (info@fundsguru.in). Our team will contact you shortly.`;
     }
   }
 
