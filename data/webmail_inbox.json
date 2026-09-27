@@ -1,0 +1,42 @@
+[
+  {
+    "id": "FG-MUILBYYT",
+    "timestamp": "2026-09-26T16:15:01.829Z",
+    "formType": "contact_page",
+    "recipient": "info@fundsguru.in",
+    "name": "gagan",
+    "email": "gagandeep.sgr@gmail.com",
+    "phone": "005500552",
+    "service": "Cyber Cell Account Lien Help",
+    "subject": "check",
+    "message": "check",
+    "urgency": "Urgent",
+    "metadata": {
+      "bankName": null,
+      "noticeType": null,
+      "disputedAmount": null,
+      "loanAmount": null,
+      "ip": "::1"
+    }
+  },
+  {
+    "id": "FG-MUIESR84",
+    "timestamp": "2026-09-26T13:12:07.635Z",
+    "formType": "general_contact",
+    "recipient": "info@fundsguru.in",
+    "name": "Harpreet Singh",
+    "email": "harpreet@example.com",
+    "phone": "+91 98765 43210",
+    "service": "Cyber Cell Frozen Account Relief",
+    "subject": "Urgent: Bank Account Frozen by Telangana Cyber Crime",
+    "message": "My current account in HDFC Bank Ludhiana has been marked with a lien of Rs 85,000 under Sec 102 CrPC due to a P2P transaction. Please assist with representation letter to IO.",
+    "urgency": "Critical",
+    "metadata": {
+      "bankName": "HDFC Bank, Basti Jodhewal Branch",
+      "noticeType": "Section 102 CrPC Lien",
+      "disputedAmount": "85000",
+      "loanAmount": null,
+      "ip": "::1"
+    }
+  }
+]
